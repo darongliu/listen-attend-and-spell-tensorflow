@@ -1,22 +1,22 @@
 import tensorflow as tf
 
-def BLSTM(input_x, hidden_units, bidirectional=False):
+def LSTM(input_x, hidden_units, bidirectional=False):
     if bidirectional:
         lstm_fw_cell = tf.contrib.rnn.BasicLSTMCell(hidden_units/2)
         lstm_bw_cell = tf.contrib.rnn.BasicLSTMCell(hidden_units/2)
         encoder_outputs, state = tf.nn.bidirectional_dynamic_rnn(
             cell_fw=lstm_fw_cell,
             cell_bw=lstm_bw_cell,
-            inputs = outputs,
-            sequence_length = sequence_length,
+            inputs = input_x,
+            sequence_length = None,
             dtype=tf.float32)
         outputs = tf.concat(encoder_outputs, 2)
     else:
         lstm_fw_cell = tf.contrib.rnn.BasicLSTMCell(hidden_units)
         encoder_outputs, state = tf.nn.dynamic_rnn(
             cell_fw=lstm_fw_cell,
-            inputs = outputs,
-            sequence_length = sequence_length,
+            inputs = input_x,
+            sequence_length = None,
             dtype=tf.float32)
         outputs = encoder_outputs
 
@@ -27,20 +27,20 @@ def pBLSTM(input_x, hidden_units):
     dynamic_dim = tf.shape(input_x)
     input_x = tf.reshape(input_x, [dynamic_dim[0], dynamic_dim[1]/2, static_dim[-1]*2])
 
-    outputs = BLSTM(input_x, hidden_units, bidirectional=True)
+    outputs = LSTM(input_x, hidden_units, bidirectional=True)
     return outputs
 
-def do_attention(state, memory, prev_weight, hidden_units, memory_length=None, reuse=False):
+def do_attention(state, memory, prev_weight, attention_hidden_units, memory_length=None, reuse=False):
     """
     bahdanau attention
     state: [batch_size x hidden_units]
     memory: [batch_size x T x hidden_units]
     prev_weight: [batch_size x T]
     """
-    state_proj = tf.layers.dense(state, hidden_units, use_bias=True)
-    memory_proj = tf.layers.dense(memory, hidden_units, use_bias=None)
+    state_proj = tf.layers.dense(state, attention_hidden_units, use_bias=True)
+    memory_proj = tf.layers.dense(memory, attention_hidden_units, use_bias=None)
     previous_feat = tf.layers.conv1d(inputs=tf.expand_dims(prev_weight,axis=-1), filters=10, kernel_size=50, padding='same')
-    previous_feat = tf.layers.dense(previous_feat, hidden_units, use_bias=None)
+    previous_feat = tf.layers.dense(previous_feat, attention_hidden_units, use_bias=None)
     temp = tf.expand_dims(state_proj, axis=1) + memory_proj + previous_feat
     temp = tf.tanh(temp)
     score = tf.squeeze(tf.layers.dense(temp, 1, use_bias=None),axis=-1)
@@ -119,6 +119,8 @@ def label_smoothing(inputs, epsilon=0.1):
     '''
     K = inputs.get_shape().as_list()[-1] # number of channels
     return ((1-epsilon) * inputs) + (epsilon / K)
+
+#TODO try dot attention
 
 
 

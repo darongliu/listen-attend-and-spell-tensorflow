@@ -19,15 +19,15 @@ class Graph:
         if mode=="train":
             self.x, self.y, self.num_batch = get_batch()
         else:
-            self.x = tf.placeholder(tf.int32, shape=(None, None))
-            self.y = tf.placeholder(tf.float32, shape=(None, None, hp.n_mels * hp.r))
+            self.x = tf.placeholder(tf.float32, shape=(None, None, hp.n_mels))
+            self.y = tf.placeholder(tf.int32, shape=(None, None))
 
         # Get encoder/decoder inputs
         with tf.variable_scope('encoder'):
             self.encoder_output = Listener(self.x)
         with tf.variable('decoder'):
             self.decoder_input = tf.concat((tf.ones_like(self.y[:, :1])*self.char2idx['S'], self.y[:, :-1]), -1)
-            self.decoder_input = embed(self.decoder_input, len(hp.vocab), hp.embed_size)
+            self.decoder_input = embed(self.decoder_input, len(hp.vocab), hp.embed_size, zero_pad=False)
             self.logits, self.attention_weight = Speller(self.decoder_input, self.encoder_output)
 
         self.preds = tf.to_int32(tf.arg_max(self.logits, dimension=-1))

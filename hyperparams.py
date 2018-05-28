@@ -4,7 +4,7 @@ class Hyperparams:
 
     attention_hidden_units
 
-    n_mels
+    n_mels=80
 
     vocab #with S
     embed_size
