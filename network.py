@@ -1,16 +1,18 @@
-import tensorflow as tf 
+import tensorflow as tf
 from module import *
 from hyperparams import Hyperparams as hp
 
 def Listener(input_x, pBLSTM_layer=3):
-    output = LSTM(input_x, hp.hidden_units, bidirectional=True)
-    for _ in range(pBLSTM_layer):
-        output = pBLSTM(output, hp.hidden_units)
+    with tf.variable_scope('lstm'):
+        output = LSTM(input_x, hp.hidden_units, bidirectional=True)
+    for i in range(pBLSTM_layer):
+        with tf.variable_scope('plstm'+str(i)):
+            output = pBLSTM(output, hp.hidden_units)
 
     return output
 
 def Speller(decoder_input, encoder_state):
-    with tf.variable_scope('attention lstm'):
+    with tf.variable_scope('attention_lstm'):
         memory = encoder_state
         lstm_cell = tf.contrib.rnn.BasicLSTMCell(hp.hidden_units)
         def step(previous_output, current_input):
@@ -28,7 +30,7 @@ def Speller(decoder_input, encoder_state):
             current_output, current_state = lstm_cell(current_input, previous_state)
             current_context, current_weight = do_attention(current_output, memory, previous_weight, hp.attention_hidden_units)
 
-            return current_output, current_context, current_weight, current_state
+            return [current_output, current_context, current_weight, current_state]
 
         batch_size = tf.shape(decoder_input)[0]
         output_init = tf.zeros([batch_size, hp.hidden_units])
@@ -36,10 +38,10 @@ def Speller(decoder_input, encoder_state):
         weight_init = tf.zeros([batch_size, tf.shape(encoder_state)[1]])
         temp = tf.zeros([batch_size,hp.hidden_units])
         lstm_state_init = tf.contrib.rnn.LSTMStateTuple(*[temp]*2)
-        init = [output_init, context_init, weight_init, lstm_state_init]    
+        init = [output_init, context_init, weight_init, lstm_state_init]
 
         decoder_input_scan = tf.transpose(decoder_input, [1,0,2])
-        output, context, attention_weight, _ = tf.scan(decoder_input_scan, initializer=init)
+        output, context, attention_weight, _ = tf.scan(step, [decoder_input_scan], initializer=init)
         output = tf.transpose(output, [1,0,2])
         context = tf.transpose(context, [1,0,2])
         attention_weight = tf.transpose(attention_weight, [1,0,2])
@@ -50,7 +52,7 @@ def Speller(decoder_input, encoder_state):
         output = LSTM(output, hp.hidden_units, bidirectional=False)
 
     with tf.variable_scope('output_mlp'):
-        output = tf.dense(output, vocab_size)
+        output = tf.layers.dense(output, len(hp.vocab))
 
     return output, attention_weight
 
@@ -58,4 +60,4 @@ def Speller(decoder_input, encoder_state):
 
 
 
-    
+

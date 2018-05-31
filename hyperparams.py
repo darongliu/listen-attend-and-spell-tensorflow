@@ -8,8 +8,8 @@ class Hyperparams:
     #vocab = "PE abcdefghijklmnopqrstuvwxyzáéíóúüñ.?¿'!" #for spain
 
     # data
-    prepro_path = "/home/givebirthday/data/VCTK/prepro_data"
-    data = "/home/givebirthday/data/VCTK"
+    prepro_path = "/home/darong/darong/data/VCTK/prepro_data"
+    data = "/home/darong/darong/data/VCTK"
     # data = "/data/private/voice/nick"
     test_dir = ''
 

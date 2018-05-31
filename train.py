@@ -8,9 +8,6 @@ import sys
 from hyperparams import Hyperparams as hp
 import tensorflow as tf
 from tqdm import tqdm
-from data_load import get_batch, load_vocab
-from modules import *
-from networks import encoder, decoder1, decoder2
 from utils import *
 from graph import Graph
 
@@ -69,6 +66,6 @@ if __name__ == '__main__':
 
     print("Done")
 
-#add dropout 
+#add dropout
 
 

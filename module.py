@@ -14,7 +14,7 @@ def LSTM(input_x, hidden_units, bidirectional=False):
     else:
         lstm_fw_cell = tf.contrib.rnn.BasicLSTMCell(hidden_units)
         encoder_outputs, state = tf.nn.dynamic_rnn(
-            cell_fw=lstm_fw_cell,
+            cell=lstm_fw_cell,
             inputs = input_x,
             sequence_length = None,
             dtype=tf.float32)
@@ -25,7 +25,7 @@ def LSTM(input_x, hidden_units, bidirectional=False):
 def pBLSTM(input_x, hidden_units):
     static_dim = input_x.get_shape().as_list()
     dynamic_dim = tf.shape(input_x)
-    input_x = tf.reshape(input_x, [dynamic_dim[0], dynamic_dim[1]/2, static_dim[-1]*2])
+    input_x = tf.reshape(input_x, [dynamic_dim[0], tf.cast(dynamic_dim[1]/2, tf.int32), static_dim[-1]*2])
 
     outputs = LSTM(input_x, hidden_units, bidirectional=True)
     return outputs
@@ -58,8 +58,8 @@ def do_attention(state, memory, prev_weight, attention_hidden_units, memory_leng
     return context_vector, weight
 
 def embed(inputs, vocab_size, num_units, zero_pad=True, scope="embedding", reuse=None):
-    '''Embeds a given tensor. 
-    
+    '''Embeds a given tensor.
+
     Args:
       inputs: A `Tensor` with type `int32` or `int64` containing the ids
          to be looked up in `lookup table`.
@@ -67,55 +67,55 @@ def embed(inputs, vocab_size, num_units, zero_pad=True, scope="embedding", reuse
       num_units: An int. Number of embedding hidden units.
       zero_pad: A boolean. If True, all the values of the fist row (id 0)
         should be constant zeros.
-      scope: Optional scope for `variable_scope`.  
+      scope: Optional scope for `variable_scope`.
       reuse: Boolean, whether to reuse the weights of a previous layer
         by the same name.
-        
+
     Returns:
       A `Tensor` with one more rank than inputs's. The last dimesionality
         should be `num_units`.
     '''
     with tf.variable_scope(scope, reuse=reuse):
-        lookup_table = tf.get_variable('lookup_table', 
-                                       dtype=tf.float32, 
+        lookup_table = tf.get_variable('lookup_table',
+                                       dtype=tf.float32,
                                        shape=[vocab_size, num_units],
                                        initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.01))
         if zero_pad:
-            lookup_table = tf.concat((tf.zeros(shape=[1, num_units]), 
+            lookup_table = tf.concat((tf.zeros(shape=[1, num_units]),
                                       lookup_table[1:, :]), 0)
     return tf.nn.embedding_lookup(lookup_table, inputs)
 
 def label_smoothing(inputs, epsilon=0.1):
     '''Applies label smoothing. See https://arxiv.org/abs/1512.00567.
-    
+
     Args:
       inputs: A 3d tensor with shape of [N, T, V], where V is the number of vocabulary.
       epsilon: Smoothing rate.
-    
+
     For example,
-    
+
     ```
     import tensorflow as tf
-    inputs = tf.convert_to_tensor([[[0, 0, 1], 
+    inputs = tf.convert_to_tensor([[[0, 0, 1],
        [0, 1, 0],
        [1, 0, 0]],
       [[1, 0, 0],
        [1, 0, 0],
        [0, 1, 0]]], tf.float32)
-       
+
     outputs = label_smoothing(inputs)
-    
+
     with tf.Session() as sess:
         print(sess.run([outputs]))
-    
+
     >>
     [array([[[ 0.03333334,  0.03333334,  0.93333334],
         [ 0.03333334,  0.93333334,  0.03333334],
         [ 0.93333334,  0.03333334,  0.03333334]],
        [[ 0.93333334,  0.03333334,  0.03333334],
         [ 0.93333334,  0.03333334,  0.03333334],
-        [ 0.03333334,  0.93333334,  0.03333334]]], dtype=float32)]   
-    ```    
+        [ 0.03333334,  0.93333334,  0.03333334]]], dtype=float32)]
+    ```
     '''
     K = inputs.get_shape().as_list()[-1] # number of channels
     return ((1-epsilon) * inputs) + (epsilon / K)

@@ -1,6 +1,6 @@
 from hyperparams import Hyperparams as hp
 import tensorflow as tf
-from networks import Listener, Speller
+from network import Listener, Speller
 from module import *
 from data_load import load_vocab, get_batch
 
@@ -25,7 +25,7 @@ class Graph:
         # Get encoder/decoder inputs
         with tf.variable_scope('encoder'):
             self.encoder_output = Listener(self.x)
-        with tf.variable('decoder'):
+        with tf.variable_scope('decoder'):
             self.decoder_input = tf.concat((tf.ones_like(self.y[:, :1])*self.char2idx['S'], self.y[:, :-1]), -1)
             self.decoder_input = embed(self.decoder_input, len(hp.vocab), hp.embed_size, zero_pad=True)
             self.logits, self.attention_weight = Speller(self.decoder_input, self.encoder_output)
@@ -41,7 +41,8 @@ class Graph:
 
         # Training Scheme
         self.global_step = tf.Variable(0, name='global_step', trainable=False)
-        self.lr = tf.placeholder(tf.int32, shape=())
+        #self.lr = tf.placeholder(tf.int32, shape=())
+        self.lr = hp.lr
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
 
         ## gradient clipping
