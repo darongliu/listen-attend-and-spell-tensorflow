@@ -17,7 +17,7 @@ class Graph:
         # y: Text. (N, Tx)
 
         if mode=="train":
-            self.x, self.y, self.num_batch = get_batch()
+            self.y, self.x, _, _, self.num_batch = get_batch()
         else:
             self.x = tf.placeholder(tf.float32, shape=(None, None, hp.n_mels))
             self.y = tf.placeholder(tf.int32, shape=(None, None))
@@ -27,7 +27,7 @@ class Graph:
             self.encoder_output = Listener(self.x)
         with tf.variable('decoder'):
             self.decoder_input = tf.concat((tf.ones_like(self.y[:, :1])*self.char2idx['S'], self.y[:, :-1]), -1)
-            self.decoder_input = embed(self.decoder_input, len(hp.vocab), hp.embed_size, zero_pad=False)
+            self.decoder_input = embed(self.decoder_input, len(hp.vocab), hp.embed_size, zero_pad=True)
             self.logits, self.attention_weight = Speller(self.decoder_input, self.encoder_output)
 
         self.preds = tf.to_int32(tf.arg_max(self.logits, dimension=-1))
@@ -41,7 +41,7 @@ class Graph:
 
         # Training Scheme
         self.global_step = tf.Variable(0, name='global_step', trainable=False)
-        self.lr = learning_rate_decay(hp.lr, global_step=self.global_step)
+        self.lr = tf.placeholder(tf.int32, shape=())
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
 
         ## gradient clipping
@@ -55,6 +55,7 @@ class Graph:
         # Summary
         #tf.summary.scalar('{}/guided_attention_loss'.format(mode), self.guided_attn_loss)
         tf.summary.scalar('{}/loss'.format(mode), self.loss)
+        tf.summary.scalar('{}/acc'.format(mode), self.acc)
         tf.summary.scalar('{}/lr'.format(mode), self.lr)
         #tf.summary.image("{}/attention".format(mode), tf.expand_dims(self.alignments, -1), max_outputs=1)
         self.merged = tf.summary.merge_all()

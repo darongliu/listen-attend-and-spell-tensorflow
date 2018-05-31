@@ -39,25 +39,23 @@ if __name__ == '__main__':
         threads = tf.train.start_queue_runners(coord=coord)
 
         for epoch in range(1, hp.num_epochs + 1):
-            total_loss, total_mel_loss, total_linear_loss = 0.0, 0.0, 0.0
+            total_loss = 0.0
             for _ in tqdm(range(g.num_batch), total=g.num_batch, ncols=70, leave=False, unit='b'):
                 #_, gs = sess.run([g.train_op, g.global_step])
-                _, gs, l, l_mel, l_linear = sess.run([g.train_op, g.global_step, g.loss, g.loss1, g.loss2])
+                _, gs, l = sess.run([g.train_op, g.global_step, g.loss])
 
                 total_loss += l
-                total_mel_loss += l_mel
-                total_linear_loss += l_linear
 
                 # Write checkpoint files
                 if gs % 1000 == 0:
                     #sv.saver.save(sess, hp.logdir + '/model_gs_{}k'.format(gs//1000))
                     # plot the first alignment for logging
-                    al = sess.run(g.alignments)
+                    al = sess.run(g.attention_weight)
                     plot_alignment(al[0], gs)
 
-            print("Epoch " + str(epoch) + " average loss:  " + str(total_loss/float(g.num_batch)) + ", average mel loss: " + str(total_mel_loss/float(g.num_batch)) + ", average linear loss: " + str(total_linear_loss/float(g.num_batch)) + "\n")
+            print("Epoch " + str(epoch) + " average loss:  " + str(total_loss/float(g.num_batch)) + "\n")
             sys.stdout.flush()
-            logfile.write("Epoch " + str(epoch) + " average loss:  " + str(total_loss/float(g.num_batch)) + ", average mel loss: " + str(total_mel_loss/float(g.num_batch)) + ", average linear loss: " + str(total_linear_loss/float(g.num_batch)) + "\n")
+            logfile.write("Epoch " + str(epoch) + " average loss:  " + str(total_loss/float(g.num_batch)) + "\n")
 
             # Write checkpoint files
             if epoch % 10 == 0:
@@ -70,3 +68,7 @@ if __name__ == '__main__':
         coord.join(threads)
 
     print("Done")
+
+#add dropout 
+
+

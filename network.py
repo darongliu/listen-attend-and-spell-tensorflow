@@ -34,7 +34,7 @@ def Speller(decoder_input, encoder_state):
         output_init = tf.zeros([batch_size, hp.hidden_units])
         context_init = tf.zeros([batch_size, hp.hidden_units])
         weight_init = tf.zeros([batch_size, tf.shape(encoder_state)[1]])
-        temp = tf.zeros([tf.shape(decoder_input)[0],hp.hidden_units])
+        temp = tf.zeros([batch_size,hp.hidden_units])
         lstm_state_init = tf.contrib.rnn.LSTMStateTuple(*[temp]*2)
         init = [output_init, context_init, weight_init, lstm_state_init]    
 

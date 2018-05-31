@@ -28,33 +28,43 @@ def load_data(mode="train"):
     # Load vocabulary
     char2idx, idx2char = load_vocab()
 
-    # Parse
-    fpaths, text_lengths, texts = [], [], []
-    transcript = os.path.join(hp.data, 'transcript_training.txt')
-    if mode == "evaluate":
-        transcript = os.path.join(hp.data, 'transcript_testing.txt')
-    lines = open(transcript, 'r').readlines()
-    total_hours = 0
-    """
-    if mode=="train":
-        lines = lines[1:]
-    else: # We attack only one sample!
-        lines = lines[:1]
-    """
+    if mode in ("train"):
+        # Parse
+        fpaths, text_lengths, texts = [], [], []
+        transcript = os.path.join(hp.data, 'transcript_training.txt')
+        if mode == "evaluate":
+            transcript = os.path.join(hp.data, 'transcript_testing.txt')
+        lines = open(transcript, 'r').readlines()
+        total_hours = 0
+        """
+        if mode=="train":
+            lines = lines[1:]
+        else: # We attack only one sample!
+            lines = lines[:1]
+        """
 
-    for line in lines:
-        #fname, _, text = line.strip().split("|")
-        fname = line.split()[0]
-        text = " ".join(line.split()[1:])
-        fpath = os.path.join(hp.data, "wavs", fname + ".wav")
-        fpaths.append(fpath)
+        for line in lines:
+            #fname, _, text = line.strip().split("|")
+            fname = line.split()[0]
+            text = " ".join(line.split()[1:])
+            fpath = os.path.join(hp.data, "wavs", fname + ".wav")
+            fpaths.append(fpath)
 
-        text = text_normalize(text) + "E"  # E: EOS
-        text = [char2idx[char] for char in text]
-        text_lengths.append(len(text))
-        texts.append(np.array(text, np.int32).tostring())
-
-    return fpaths, text_lengths, texts
+            text = text_normalize(text) + "E"  # E: EOS
+            text = [char2idx[char] for char in text]
+            text_lengths.append(len(text))
+            texts.append(np.array(text, np.int32).tostring())
+        return fpaths, text_lengths, texts
+    else:
+        # Parse
+        lines = open(hp.test_data, 'r').readlines()
+        sents = [text_normalize(line.split(" ", 1)[-1]).strip() + "E" for line in lines] # text normalization, E: EOS
+        lengths = [len(sent) for sent in sents]
+        maxlen = sorted(lengths, reverse=True)[0]
+        texts = np.zeros((len(sents), maxlen), np.int32)
+        for i, sent in enumerate(sents):
+            texts[i, :len(sent)] = [char2idx[char] for char in sent]
+        return texts
 
 def get_batch():
     """Loads training data and put them in queues"""
@@ -81,7 +91,12 @@ def get_batch():
                 fname = os.path.basename(fpath.decode())
                 mel = hp.prepro_path + "/mels/{}".format(fname.replace("wav", "npy"))
                 mag = hp.prepro_path + "/mags/{}".format(fname.replace("wav", "npy"))
-                return fname, np.load(mel), np.load(mag)
+                mel = np.load(mel)
+                mel = np.reshape(mel, [-1, hp.n_mels])
+                t = mel.shape[0]
+                num_paddings = 8 - (t % 8) if t % 8 != 0 else 0
+                mel = np.pad(mel, [[0, num_paddings], [0, 0]], mode="constant")
+                return fname, mel, np.load(mag)
 
             fname, mel, mag = tf.py_func(_load_spectrograms, [fpath], [tf.string, tf.float32, tf.float32])
         else:
@@ -90,7 +105,7 @@ def get_batch():
         # Add shape information
         fname.set_shape(())
         text.set_shape((None,))
-        mel.set_shape((None, hp.n_mels*hp.r))
+        mel.set_shape((None, hp.n_mels))
         mag.set_shape((None, hp.n_fft//2+1))
 
         # Batching

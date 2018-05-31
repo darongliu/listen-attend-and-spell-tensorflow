@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-#/usr/bin/python2
 '''
-By kyubyong park. kbpark.linguist@gmail.com.
+modified from
 https://www.github.com/kyubyong/tacotron
 '''
 
