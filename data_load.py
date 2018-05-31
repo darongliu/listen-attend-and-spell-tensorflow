@@ -28,7 +28,7 @@ def load_data(mode="train"):
     # Load vocabulary
     char2idx, idx2char = load_vocab()
 
-    if mode in ("train"):
+    if mode in ("train", 'evaluate'):
         # Parse
         fpaths, text_lengths, texts = [], [], []
         transcript = os.path.join(hp.data, 'transcript_training.txt')
@@ -53,18 +53,11 @@ def load_data(mode="train"):
             text = text_normalize(text) + "E"  # E: EOS
             text = [char2idx[char] for char in text]
             text_lengths.append(len(text))
-            texts.append(np.array(text, np.int32).tostring())
+            if mode=="train":
+                texts.append(np.array(text, np.int32).tostring())
+            if mode=="evaluate":
+                texts.append(np.array(text, np.int32))
         return fpaths, text_lengths, texts
-    else:
-        # Parse
-        lines = open(hp.test_data, 'r').readlines()
-        sents = [text_normalize(line.split(" ", 1)[-1]).strip() + "E" for line in lines] # text normalization, E: EOS
-        lengths = [len(sent) for sent in sents]
-        maxlen = sorted(lengths, reverse=True)[0]
-        texts = np.zeros((len(sents), maxlen), np.int32)
-        for i, sent in enumerate(sents):
-            texts[i, :len(sent)] = [char2idx[char] for char in sent]
-        return texts
 
 def get_batch():
     """Loads training data and put them in queues"""

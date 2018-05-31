@@ -29,9 +29,9 @@ def evaluate():
     g = Graph(mode="evaluate"); print("Graph loaded")
 
     # Load data
-    texts = load_data(mode="evaluate")
-        
-
+    fpaths, _, texts = load_data(mode="evaluate")
+    all_feat = [load_prepre_spectrograms(fpath) for fpath in fpaths]
+ 
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, tf.train.latest_checkpoint(hp.logdir)); print("Evaluate Model Restored!")
