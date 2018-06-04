@@ -21,17 +21,37 @@ def load_pre_spectrograms(fpath):
     mel = np.pad(mel, [[0, num_paddings], [0, 0]], mode="constant")
     return fname, mel, np.load(mag)
 
-def get_sent(idx2char, idx_np):
-    all_sent = []
-    for one_idx_np in idx_np:
-        sent = []
-        for idx in one_idx_np:
-            sent.append(idx2char[idx])
-        all_sent.append(sent)
-    return all_sent
+def get_sent(idx2char, sent_idx):
+    #sent_idx: 1-d array
+    sent = ''
+    for idx in sent_idx:
+        if idx2char[idx] == 'E':
+            break
+        sent += idx2char[idx]
+    return sent
 
-def wer(w,h):
-    pass
+def wer(r, h):
+    d = numpy.zeros((len(r)+1)*(len(h)+1), dtype=numpy.uint8)
+    d = d.reshape((len(r)+1, len(h)+1))
+    for i in range(len(r)+1):
+        for j in range(len(h)+1):
+            if i == 0:
+                d[0][j] = j
+            elif j == 0:
+                d[i][0] = i
+
+    # computation
+    for i in range(1, len(r)+1):
+        for j in range(1, len(h)+1):
+            if r[i-1] == h[j-1]:
+                d[i][j] = d[i-1][j-1]
+            else:
+                substitution = d[i-1][j-1] + 1
+                insertion    = d[i][j-1] + 1
+                deletion     = d[i-1][j] + 1
+                d[i][j] = min(substitution, insertion, deletion)
+
+return d[len(r)][len(h)]
 
 def evaluate():
     # Load graph
@@ -47,26 +67,33 @@ def evaluate():
         new_mel_spec[i, :len(m_spec), :] = m_spec
 
     saver = tf.train.Saver()
-    opf = open("Inference_text_seqs.txt", "w") #inference output
     with tf.Session() as sess:
         saver.restore(sess, tf.train.latest_checkpoint(hp.logdir)); print("Evaluate Model Restored!")
         y_hat = np.zeros((len(texts), 100), np.float32)
         for j in tqdm.tqdm(range(100)):
-            _y_hat = sess.run(g.y_hat, {g.x: new_mel_spec, g.y: y_hat})
+            _y_hat = sess.run(g.preds, {g.x: new_mel_spec, g.y: y_hat})
             y_hat[:, j] = _y_hat[:, j]
 
-    for i, text in enumerate(y_hat):
-        fname = all_feat[i][0]
-        text_gt = texts[i]
-        final_str = fname + ","
-        for t in text_gt:
-            final_str = final_str + idx2char[t]
-        final_str = final_str + ","
-        for t in text:
-            final_str = final_str + idx2char[t]
-        final_str = final_str + "\n"
+    all_we = 0
+    all_wrd = 0
+    opf = open("./Inference_text_seqs.txt", "w") #inference output
 
+    for i, idx_inf in enumerate(y_hat):
+        fname = os.path.basename(fpath[i])
+
+        idx_gt = texts[i]
+        str_gt = get_sent(text_gt)
+
+        str_inf = get_sent(idx_inf)
+
+        all_we += wer(list(str_inf), list(str_gt))
+        all_wrd += len(str_gt)
+
+        final_str = fname + '\n' + str_gt + '\n' + str_inf + '\n'*2
         opf.write(final_str)
+    print('wer: ' + str(all_we/all_wrd))
+    opf.write('wer: ' + str(all_we/all_wrd))
+
 if __name__ == '__main__':
     evaluate()
     print("Done")
