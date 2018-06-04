@@ -3,18 +3,15 @@ modified from
 https://www.github.com/kyubyong/tacotron
 '''
 from hyperparams import Hyperparams as hp
-import tqdm
-from data_load import load_data
+import tqdm 
+from data_load import load_data, load_vocab
 import tensorflow as tf
 from graph import Graph
 import os
 import numpy as np
-from utils import load_spectrograms
 
-def wer(list1, list2):
-    
-def load_prepre_spectrograms(fpath):
-    fname = os.path.basename(fpath.decode())
+def load_pre_spectrograms(fpath):
+    fname = os.path.basename(fpath)
     mel = hp.prepro_path + "/mels/{}".format(fname.replace("wav", "npy"))
     mag = hp.prepro_path + "/mags/{}".format(fname.replace("wav", "npy"))
     mel = np.load(mel)
@@ -24,58 +21,47 @@ def load_prepre_spectrograms(fpath):
     mel = np.pad(mel, [[0, num_paddings], [0, 0]], mode="constant")
     return fname, mel, np.load(mag)
 
+def get_sent(idx2char, idx_np):
+    all_sent = []
+    for i in range(len(idx_np)):
+
+def wer(w,h):
+    pass
+
 def evaluate():
     # Load graph
     g = Graph(mode="evaluate"); print("Graph loaded")
 
     # Load data
+    _, idx2char = load_vocab()
     fpaths, _, texts = load_data(mode="evaluate")
-    all_feat = [load_prepre_spectrograms(fpath) for fpath in fpaths]
- 
+    all_mel_spec = [load_pre_spectrograms(fpath)[1] for fpath in fpaths]
+    lengths = max([len(m) for m in all_mel_spec])
+    new_mel_spec = np.zeros((len(all_mel_spec), maxlen, hp.n_mels), np.float)
+    for i, m_spec in enumerate(all_mel_spec):
+        new_mel_spec[i, :len(m_spec), :] = m_spec
+
     saver = tf.train.Saver()
+    opf = open("Inference_text_seqs.txt", "w") #inference output
     with tf.Session() as sess:
         saver.restore(sess, tf.train.latest_checkpoint(hp.logdir)); print("Evaluate Model Restored!")
-        """
-        err = 0.0
+        y_hat = np.zeros((len(texts), 100), np.float32)
+        for j in tqdm.tqdm(range(100)):
+            _y_hat = sess.run(g.y_hat, {g.x: new_mel_spec, g.y: y_hat})
+            y_hat[:, j] = _y_hat[:, j]
 
-        for i, t_split in enumerate(new_texts):
-            y_hat = np.zeros((t_split.shape[0], 200, hp.n_mels*hp.r), np.float32)  # hp.n_mels*hp.r
-            for j in tqdm.tqdm(range(200)):
-                _y_hat = sess.run(g.y_hat, {g.x: t_split, g.y: y_hat})
-                y_hat[:, j, :] = _y_hat[:, j, :]
+        for i, text in enumerate(y_hat):
+            fname = all_feat[i][0]
+            text_gt = texts[i]
+            final_str = fname + ","
+            for t in text_gt:
+                final_str = final_str + idx2char[t]
+            final_str = final_str + ","
+            for t in text:
+                final_str = final_str + idx2char[t]
+            final_str = final_str + "\n"
 
-            mags = sess.run(g.z_hat, {g.y_hat: y_hat})
-            for k, mag in enumerate(mags):
-                fname, mel_ans, mag_ans = load_spectrograms(new_fpaths[i][k])
-                print("File {} is being evaluated ...".format(fname))
-                audio = spectrogram2wav(mag)
-                audio_ans = spectrogram2wav(mag_ans)
-                err += calculate_mse(audio, audio_ans)
-
-        err = err/float(len(fpaths))
-        print(err)
-
-        """
-        # Feed Forward
-        ## mel
-        y_hat = np.zeros((new_texts.shape[0], 200, hp.n_mels*hp.r), np.float32)  # hp.n_mels*hp.r
-        for j in tqdm.tqdm(range(200)):
-            _y_hat = sess.run(g.y_hat, {g.x: new_texts, g.y: y_hat})
-            y_hat[:, j, :] = _y_hat[:, j, :]
-        ## mag
-        mags = sess.run(g.z_hat, {g.y_hat: y_hat})
-        err = 0.0
-        for i, mag in enumerate(mags):
-            fname, mel_ans, mag_ans = load_spectrograms(fpaths[i])
-            print("File {} is being evaluated ...".format(fname))
-            audio = spectrogram2wav(mag)
-            audio_ans = spectrogram2wav(mag_ans)
-            err += calculate_mse(audio, audio_ans)
-        err = err/float(len(fpaths))
-        print(err)
-        opf.write(hp.logdir  + "  " + str(err) + "\n")
-
+            opf.write(final_str)
 if __name__ == '__main__':
     evaluate()
     print("Done")
-
