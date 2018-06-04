@@ -3,7 +3,7 @@ modified from
 https://www.github.com/kyubyong/tacotron
 '''
 from hyperparams import Hyperparams as hp
-import tqdm 
+import tqdm
 from data_load import load_data, load_vocab
 import tensorflow as tf
 from graph import Graph
@@ -23,7 +23,12 @@ def load_pre_spectrograms(fpath):
 
 def get_sent(idx2char, idx_np):
     all_sent = []
-    for i in range(len(idx_np)):
+    for one_idx_np in idx_np:
+        sent = []
+        for idx in one_idx_np:
+            sent.append(idx2char[idx])
+        all_sent.append(sent)
+    return all_sent
 
 def wer(w,h):
     pass
@@ -50,18 +55,18 @@ def evaluate():
             _y_hat = sess.run(g.y_hat, {g.x: new_mel_spec, g.y: y_hat})
             y_hat[:, j] = _y_hat[:, j]
 
-        for i, text in enumerate(y_hat):
-            fname = all_feat[i][0]
-            text_gt = texts[i]
-            final_str = fname + ","
-            for t in text_gt:
-                final_str = final_str + idx2char[t]
-            final_str = final_str + ","
-            for t in text:
-                final_str = final_str + idx2char[t]
-            final_str = final_str + "\n"
+    for i, text in enumerate(y_hat):
+        fname = all_feat[i][0]
+        text_gt = texts[i]
+        final_str = fname + ","
+        for t in text_gt:
+            final_str = final_str + idx2char[t]
+        final_str = final_str + ","
+        for t in text:
+            final_str = final_str + idx2char[t]
+        final_str = final_str + "\n"
 
-            opf.write(final_str)
+        opf.write(final_str)
 if __name__ == '__main__':
     evaluate()
     print("Done")
