@@ -1,4 +1,4 @@
-'''
+'''                                                                                                                               
 modified from
 https://www.github.com/kyubyong/tacotron
 '''
@@ -31,9 +31,9 @@ def get_sent(idx2char, sent_idx):
     return sent
 
 def wer(r, h):
-    d = numpy.zeros((len(r)+1)*(len(h)+1), dtype=numpy.uint8)
+    d = np.zeros((len(r)+1)*(len(h)+1), dtype=np.uint8)
     d = d.reshape((len(r)+1, len(h)+1))
-    for i in range(len(r)+1):
+    for i in range(len(r)+1):                                                                                                     
         for j in range(len(h)+1):
             if i == 0:
                 d[0][j] = j
@@ -51,7 +51,7 @@ def wer(r, h):
                 deletion     = d[i-1][j] + 1
                 d[i][j] = min(substitution, insertion, deletion)
 
-return d[len(r)][len(h)]
+    return d[len(r)][len(h)]
 
 def evaluate():
     # Load graph
@@ -61,7 +61,7 @@ def evaluate():
     _, idx2char = load_vocab()
     fpaths, _, texts = load_data(mode="evaluate")
     all_mel_spec = [load_pre_spectrograms(fpath)[1] for fpath in fpaths]
-    lengths = max([len(m) for m in all_mel_spec])
+    maxlen = max([len(m) for m in all_mel_spec])
     new_mel_spec = np.zeros((len(all_mel_spec), maxlen, hp.n_mels), np.float)
     for i, m_spec in enumerate(all_mel_spec):
         new_mel_spec[i, :len(m_spec), :] = m_spec
@@ -69,7 +69,7 @@ def evaluate():
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, tf.train.latest_checkpoint(hp.logdir)); print("Evaluate Model Restored!")
-        y_hat = np.zeros((len(texts), 100), np.float32)
+        y_hat = np.zeros((len(texts), 100), np.float32)                                                                           
         for j in tqdm.tqdm(range(100)):
             _y_hat = sess.run(g.preds, {g.x: new_mel_spec, g.y: y_hat})
             y_hat[:, j] = _y_hat[:, j]
@@ -79,21 +79,24 @@ def evaluate():
     opf = open("./Inference_text_seqs.txt", "w") #inference output
 
     for i, idx_inf in enumerate(y_hat):
-        fname = os.path.basename(fpath[i])
+        fname = os.path.basename(fpaths[i])
 
         idx_gt = texts[i]
-        str_gt = get_sent(text_gt)
+        str_gt = get_sent(idx2char, idx_gt)
 
-        str_inf = get_sent(idx_inf)
+        str_inf = get_sent(idx2char, idx_inf)
 
         all_we += wer(list(str_inf), list(str_gt))
         all_wrd += len(str_gt)
+        #all_we += float(wer(list(str_inf), list(str_gt)))/float(len(str_gt))
 
         final_str = fname + '\n' + str_gt + '\n' + str_inf + '\n'*2
         opf.write(final_str)
-    print('wer: ' + str(all_we/all_wrd))
-    opf.write('wer: ' + str(all_we/all_wrd))
+    print('cer: ' + str(all_we/all_wrd))
+    opf.write('cer: ' + str(all_we/all_wrd))
+    #print('cer: ' + str(all_we/float(len(texts))))
+    #opf.write('cer: ' + str(all_we/float(len(texts))))
 
 if __name__ == '__main__':
     evaluate()
-    print("Done")
+    print("Done") 
