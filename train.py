@@ -66,6 +66,7 @@ if __name__ == '__main__':
 
     print("Done")
 
-#add dropout
+# add dropout
+# use diff attention 
 
 
