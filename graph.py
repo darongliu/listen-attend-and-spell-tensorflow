@@ -10,7 +10,7 @@ class Graph:
         self.char2idx, self.idx2char = load_vocab()
 
         # Set phase
-        is_training=True if mode=="train" else False
+        self.is_training=True if mode=="train" else False
 
         # Data Feeding
         # x: melspectrogram. (batch, T, n_mels)

@@ -1,4 +1,4 @@
-'''                                                                                                                               
+'''
 modified from
 https://www.github.com/kyubyong/tacotron
 '''
@@ -33,7 +33,7 @@ def get_sent(idx2char, sent_idx):
 def wer(r, h):
     d = np.zeros((len(r)+1)*(len(h)+1), dtype=np.uint8)
     d = d.reshape((len(r)+1, len(h)+1))
-    for i in range(len(r)+1):                                                                                                     
+    for i in range(len(r)+1):
         for j in range(len(h)+1):
             if i == 0:
                 d[0][j] = j
@@ -69,16 +69,22 @@ def evaluate():
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, tf.train.latest_checkpoint(hp.logdir)); print("Evaluate Model Restored!")
-        y_hat = np.zeros((len(texts), 100), np.float32)                                                                           
-        for j in tqdm.tqdm(range(100)):
-            _y_hat = sess.run(g.preds, {g.x: new_mel_spec, g.y: y_hat})
-            y_hat[:, j] = _y_hat[:, j]
+        total_y_hat = np.zeros((len(texts), 100), np.float32)
+        batch_idx = list(range(0,len(texts),hp.inference_batch_size))
+        batch_idx.append(len(texts))
+        for i in tqdm.tqdm(range(len(batch_idx)-1)):
+            y_hat = total_y_hat[batch_idx[i]:batch_idx[i+1]]
+            mel_spec = new_mel_spec[batch_idx[i]:batch_idx[i+1]]
+            for j in range(100):
+                _y_hat = sess.run(g.preds, {g.x: mel_spec, g.y: y_hat})
+                y_hat[:, j] = _y_hat[:, j]
+            total_y_hat[batch_idx[i]:batch_idx[i+1]] = y_hat
 
     all_we = 0
     all_wrd = 0
     opf = open("./Inference_text_seqs.txt", "w") #inference output
 
-    for i, idx_inf in enumerate(y_hat):
+    for i, idx_inf in enumerate(total_y_hat):
         fname = os.path.basename(fpaths[i])
 
         idx_gt = texts[i]
@@ -99,4 +105,4 @@ def evaluate():
 
 if __name__ == '__main__':
     evaluate()
-    print("Done") 
+    print("Done")
