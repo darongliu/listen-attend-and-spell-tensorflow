@@ -32,7 +32,7 @@ def pBLSTM(input_x, hidden_units):
 
 def do_attention(state, memory, prev_weight, attention_hidden_units, memory_length=None, reuse=False):
     """
-    bahdanau attention
+    bahdanau attention, aka, original attention
     state: [batch_size x hidden_units]
     memory: [batch_size x T x hidden_units]
     prev_weight: [batch_size x T]
@@ -44,6 +44,30 @@ def do_attention(state, memory, prev_weight, attention_hidden_units, memory_leng
     temp = tf.expand_dims(state_proj, axis=1) + memory_proj + previous_feat
     temp = tf.tanh(temp)
     score = tf.squeeze(tf.layers.dense(temp, 1, use_bias=None),axis=-1)
+
+    #mask
+    if memory_length is not None:
+        mask = tf.sequence_mask(memory_length, tf.shape(memory)[1])
+        paddings = tf.cast(tf.fill(tf.shape(score), -2**30),tf.float32)
+        score = tf.where(mask, score, paddings)
+
+    weight = tf.nn.softmax(score) #[batch x T]
+    context_vector = tf.matmul(tf.expand_dims(weight,1),memory)
+    context_vector = tf.squeeze(context_vector,axis=1)
+
+    return context_vector, weight
+
+def do_attention_dot(state, memory, prev_weight, attention_hidden_units, memory_length=None, reuse=False):
+    """
+    dot attention
+    state: [batch_size x hidden_units]
+    memory: [batch_size x T x hidden_units]
+    prev_weight: [batch_size x T]
+    """
+    state_proj = tf.layers.dense(state, memory.get_shape().as_list()[-1], use_bias=None)
+    #memory_proj = tf.layers.dense(memory, attention_hidden_units, use_bias=None)
+    memory_proj = memory
+    score = tf.reduce_sum(tf.multiply(tf.expand_dims(state_proj, 1), memory_proj), axis=-1)
 
     #mask
     if memory_length is not None:

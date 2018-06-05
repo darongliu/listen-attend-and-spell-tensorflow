@@ -11,7 +11,7 @@ def Listener(input_x, pBLSTM_layer=3):
 
     return output
 
-def Speller(decoder_input, encoder_state):
+def Speller(decoder_input, encoder_state, is_training=True):
     with tf.variable_scope('attention_lstm'):
         memory = encoder_state
         lstm_cell = tf.contrib.rnn.BasicLSTMCell(hp.hidden_units)
@@ -26,9 +26,13 @@ def Speller(decoder_input, encoder_state):
 
             decoder_current_input = current_input[0]
             current_input = tf.concat([decoder_current_input, previous_context], -1)
+            current_input = tf.layers.dropout(current_input, rate=hp.dropout_rate, training=is_training)
 
             current_output, current_state = lstm_cell(current_input, previous_state)
-            current_context, current_weight = do_attention(current_output, memory, previous_weight, hp.attention_hidden_units)
+            if hp.attention_mechanism == 'dot':
+                current_context, current_weight = do_attention_dot(current_output, memory, previous_weight, hp.attention_hidden_units)
+            else:
+                current_context, current_weight = do_attention(current_output, memory, previous_weight, hp.attention_hidden_units) #original attention
 
             return [current_output, current_context, current_weight, current_state]
 
@@ -47,9 +51,11 @@ def Speller(decoder_input, encoder_state):
         attention_weight = tf.transpose(attention_weight, [1,0,2])
 
         output = tf.concat([output, context], -1)
+        output = tf.layers.dropout(output, rate=hp.dropout_rate, training=is_training)
 
     with tf.variable_scope('lstm'):
         output = LSTM(output, hp.hidden_units, bidirectional=False)
+        output = tf.layers.dropout(output, rate=hp.dropout_rate, training=is_training)
 
     with tf.variable_scope('output_mlp'):
         output = tf.layers.dense(output, len(hp.vocab))

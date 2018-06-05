@@ -28,7 +28,7 @@ class Graph:
         with tf.variable_scope('decoder'):
             self.decoder_input = tf.concat((tf.ones_like(self.y[:, :1])*self.char2idx['S'], self.y[:, :-1]), -1)
             self.decoder_input = embed(self.decoder_input, len(hp.vocab), hp.embed_size, zero_pad=True)
-            self.logits, self.attention_weight = Speller(self.decoder_input, self.encoder_output)
+            self.logits, self.attention_weight = Speller(self.decoder_input, self.encoder_output, is_training=self.is_training)
 
         self.preds = tf.to_int32(tf.arg_max(self.logits, dimension=-1))
         self.istarget = tf.to_float(tf.not_equal(self.y, self.char2idx['P']))
