@@ -17,7 +17,9 @@ tf.app.flags.DEFINE_string("keep_train", "False", "keep training from existed mo
 if __name__ == '__main__':
     keep_train = FLAGS.keep_train
     g = Graph(); print("Training Graph loaded")
-    logfile = open(hp.logfile, "a")
+    if not os.path.isdir(hp.logdir):
+        os.makedirs(hp.logdir)
+    logfile = open(os.path.join(hp.logdir,hp.logfile), "a")
     saver = tf.train.Saver(max_to_keep=10)
     init = tf.global_variables_initializer()
     #sv = tf.train.Supervisor(logdir=hp.logdir, save_summaries_secs=60, save_model_secs=0)
@@ -67,6 +69,6 @@ if __name__ == '__main__':
     print("Done")
 
 # add dropout
-# use diff attention 
+# use diff attention
 
 

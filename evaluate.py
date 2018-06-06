@@ -82,7 +82,7 @@ def evaluate():
 
     all_we = 0
     all_wrd = 0
-    opf = open("./Inference_text_seqs.txt", "w") #inference output
+    opf = open(os.path.join(hp.logdir,"Inference_text_seqs.txt"), "w") #inference output
 
     for i, idx_inf in enumerate(total_y_hat):
         fname = os.path.basename(fpaths[i])

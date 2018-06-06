@@ -39,8 +39,8 @@ class Hyperparams:
     # training scheme
     num_epochs=300
     lr = 0.001 # Initial learning rate.
-    logdir = "./logdir/vctk"
-    logfile="./log"
+    logdir = "./logdir/vctk_dr_0.1_original"
+    logfile="log"
     batch_size = 32
 
     # for inference
