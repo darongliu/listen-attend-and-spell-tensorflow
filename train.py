@@ -55,6 +55,7 @@ if __name__ == '__main__':
                     plot_alignment(al[0], gs)
 
             if total_loss > previous_total_loss:
+                print('decay learning rate by', hp.lr_decay)
                 lr = lr * hp.lr_decay
             previous_total_loss = total_loss
 
