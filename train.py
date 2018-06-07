@@ -38,7 +38,7 @@ if __name__ == '__main__':
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
-        lr = np.array(hp.lr,dtype=np.float32)
+        lr = hp.lr
         previous_total_loss = np.inf
         for epoch in range(1, hp.num_epochs + 1):
             total_loss = 0.0
@@ -56,8 +56,8 @@ if __name__ == '__main__':
                     plot_alignment(al[0], gs)
 
             if total_loss > previous_total_loss:
-                print('decay learning rate by', hp.lr_decay)
-                lr = np.array(lr*hp.lr_decay, dtype=np.float32)
+                lr = lr*hp.lr_decay
+                print('decay learning rate by:', hp.lr_decay, 'now lr:', lr)
             previous_total_loss = total_loss
 
             print("Epoch " + str(epoch) + " average loss:  " + str(total_loss/float(g.num_batch)) + "\n")
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             if epoch % 10 == 0:
                 #sv.saver.save(sess, hp.logdir + '/model_gs_{}k'.format(gs//1000))
                 saver.save(sess, hp.logdir + '/model_epoch_{}.ckpt'.format(epoch))
-                result = sess.run(g.merged)
+                result = sess.run(g.merged, feed_dict={g.lr:lr})
                 writer.add_summary(result, epoch)
 
         coord.request_stop()
