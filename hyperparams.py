@@ -44,4 +44,4 @@ class Hyperparams:
     batch_size = 32
 
     # for inference
-    inference_batch_size = 500 #how many batch per time
+    inference_batch_size = 300 #how many batch per time
