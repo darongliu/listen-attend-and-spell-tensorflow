@@ -33,12 +33,15 @@ class Hyperparams:
     hidden_units = 512
     attention_hidden_units = 512
     r = 5 # Reduction factor. Paper => 2, 3, 5
+
+    # for las
     dropout_rate = 0.1 #rate=0.1 would drop out 10% of input units.
     attention_mechanism='original' #original #dot
 
     # training scheme
-    num_epochs=300
+    num_epochs=90
     lr = 0.001 # Initial learning rate.
+    lr_decay=0.9 #decay whenever loss is larger than previous epoch
     logdir = "./logdir/vctk_dr_0.1_original"
     logfile="log"
     batch_size = 32

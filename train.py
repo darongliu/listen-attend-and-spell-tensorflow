@@ -37,11 +37,13 @@ if __name__ == '__main__':
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
+        lr = hp.lr
+        previous_total_loss = np.inf
         for epoch in range(1, hp.num_epochs + 1):
             total_loss = 0.0
             for _ in tqdm(range(g.num_batch), total=g.num_batch, ncols=70, leave=False, unit='b'):
                 #_, gs = sess.run([g.train_op, g.global_step])
-                _, gs, l = sess.run([g.train_op, g.global_step, g.loss])
+                _, gs, l = sess.run([g.train_op, g.global_step, g.loss], feed_dict={g.lr:lr})
 
                 total_loss += l
 
@@ -51,6 +53,11 @@ if __name__ == '__main__':
                     # plot the first alignment for logging
                     al = sess.run(g.attention_weight)
                     plot_alignment(al[0], gs)
+
+            if total_loss > previous_total_loss:
+                print('decay learning rate by', hp.lr_decay)
+                lr = lr * hp.lr_decay
+            previous_total_loss = total_loss
 
             print("Epoch " + str(epoch) + " average loss:  " + str(total_loss/float(g.num_batch)) + "\n")
             sys.stdout.flush()
