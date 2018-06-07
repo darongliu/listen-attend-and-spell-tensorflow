@@ -39,7 +39,7 @@ class Hyperparams:
     attention_mechanism='original' #original #dot
 
     # training scheme
-    num_epochs=300
+    num_epochs=90
     lr = 0.001 # Initial learning rate.
     lr_decay=0.9 #decay whenever loss is larger than previous epoch
     logdir = "./logdir/vctk_dr_0.1_original"
