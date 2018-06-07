@@ -5,6 +5,7 @@ https://www.github.com/kyubyong/tacotron
 
 import os
 import sys
+import numpy as np
 from hyperparams import Hyperparams as hp
 import tensorflow as tf
 from tqdm import tqdm
