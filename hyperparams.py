@@ -28,13 +28,11 @@ class Hyperparams:
     ref_db = 20
 
     # model
-    ## tacotron-1
-    embed_size = 256 # alias = E
+    #tacotron
+    r = 5 # Reduction factor. Paper => 2, 3, 5
+    #las
     hidden_units = 512
     attention_hidden_units = 512
-    r = 5 # Reduction factor. Paper => 2, 3, 5
-
-    # for las
     dropout_rate = 0.2 #rate=0.1 would drop out 10% of input units.
     attention_mechanism='original' #original #dot
 
