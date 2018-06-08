@@ -31,6 +31,7 @@ class Hyperparams:
     #tacotron
     r = 5 # Reduction factor. Paper => 2, 3, 5
     #las
+    embed_size = 256
     hidden_units = 512
     attention_hidden_units = 512
     dropout_rate = 0.2 #rate=0.1 would drop out 10% of input units.
