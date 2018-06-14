@@ -8,8 +8,10 @@ class Hyperparams:
     #vocab = "PE abcdefghijklmnopqrstuvwxyzáéíóúüñ.?¿'!" #for spain
 
     # data
-    prepro_path = "/home/darong/darong/data/VCTK/prepro_data"
-    data = "/home/darong/darong/data/VCTK"
+    prepro_path = "/home/yangchiyi/mixed_vctk_librispeech/prepro_data"
+    data = "/home/yangchiyi/mixed_vctk_librispeech"
+    #prepro_path = "/home/yangchiyi/VCTK/prepro_data"
+    #data = "/home/yangchiyi/VCTK"
     # data = "/data/private/voice/nick"
     test_dir = ''
 
@@ -22,7 +24,7 @@ class Hyperparams:
     win_length = int(sr*frame_length) # samples.
     n_mels = 80 # Number of Mel banks to generate
     power = 1.2 # Exponent for amplifying the predicted magnitude
-    n_iter = 300 # Number of inversion iterations #griffin-lim
+    n_iter = 400 # Number of inversion iterations #griffin-lim
     preemphasis = .97 # or None
     max_db = 100
     ref_db = 20
@@ -37,10 +39,10 @@ class Hyperparams:
     attention_mechanism='original' #original #dot
 
     # training scheme
-    num_epochs=300
+    num_epochs = 500
     lr = 0.001 # Initial learning rate.
-    logdir = "./logdir/vctk"
-    logfile="./log"
+    logdir = "/home/yangchiyi/las_logdir/MIXED_epoch500_dropout01_originattn_201806091550.log"
+    logfile="./log/MIXED_epoch500_dropout01_originattn_201806091550.log"
     batch_size = 32
 
     # for inference

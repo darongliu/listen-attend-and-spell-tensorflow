@@ -65,8 +65,10 @@ def do_attention_dot(state, memory, prev_weight, attention_hidden_units, memory_
     prev_weight: [batch_size x T]
     """
     state_proj = tf.layers.dense(state, memory.get_shape().as_list()[-1], use_bias=None)
-    #memory_proj = tf.layers.dense(memory, attention_hidden_units, use_bias=None)
     memory_proj = memory
+
+    #state_proj = tf.layers.dense(state, attention_hidden_units, use_bias=None, activation=tf.nn.relu)
+    #memory_proj = tf.layers.dense(memory, attention_hidden_units, use_bias=None, activation=tf.nn.relu)
     score = tf.reduce_sum(tf.multiply(tf.expand_dims(state_proj, 1), memory_proj), axis=-1)
 
     #mask
