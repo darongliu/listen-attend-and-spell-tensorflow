@@ -42,8 +42,8 @@ class Graph:
         # Training Scheme
         self.global_step = tf.Variable(0, name='global_step', trainable=False)
         self.lr = tf.placeholder(tf.float32, shape=())
-        #self.lr = hp.lr
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
+        self.lr = hp.lr
+        #self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
 
         ## gradient clipping
         self.gvs = self.optimizer.compute_gradients(self.loss)
